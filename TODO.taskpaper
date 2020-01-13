@@ -1,0 +1,4 @@
+CLI:
+	- 1Password
+		- item name with space
+		- error handling for item not exist
