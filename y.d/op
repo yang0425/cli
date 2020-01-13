@@ -1,0 +1,117 @@
+# vim: ft=sh
+use 'op' # functions to interact of 1Password
+
+SUBCOMMAND_DESC="Command for 1Password"
+SUBCOMMAND_HELP=$(
+    cat <<EOH
+
+readme        Read this first! Setup and notes.
+list          List all items.
+get [Title]   Get information with title.
+cp [Title]    Copy password to clipboard.
+[Title]       Same as "cp [Title]" just a shortcut
+pw            Retrive password for 1Password.
+EOH
+)
+
+case ${1} in
+list)
+    in_cyan "Fetching password from KeyChain...\n"
+    password=$(get_password_from_keychain)
+    in_cyan "Fetching items from 1Password...\n\n"
+    list ${password}
+    ;;
+get)
+    in_cyan "Fetching password from KeyChain...\n"
+    password=$(get_password_from_keychain)
+    in_cyan "Fetching item ${2[@]} from 1Password...\n\n"
+    get ${password} ${2[@]}
+    ;;
+cp)
+    in_cyan "Fetching password from KeyChain...\n"
+    password=$(get_password_from_keychain)
+    in_cyan "Fetching item ${2} from 1Password...\n\n"
+    cp ${password} ${2}
+    in_cyan "The password for ${2} have been saved in clipboard!\n"
+    ;;
+pw)
+    echo $(in_cyan "Password: $(get_password_from_keychain)\n")
+    ;;
+readme)
+    less <<END_OF_README
+
+For this script to work it needs some configurations:
+
+  1. Install 1Password command line tool
+  2. Install jq
+  3. Your 1Password's password saved into KeyChain app
+  4. Assistive permissions for your terminal
+
+Scroll down to STEP-TESTING if you already know how to configure.
+
+CONFIGURATION
+
+1) Install 1Password command line tool 
+
+Follow the tutorial from https://support.1password.com/command-line-getting-started/
+
+2) Install jq
+
+brew install jq
+
+3) Using KeyChain to save your password
+
+On OS X (your Mac) there's an application called 'KeyChain Access' usually
+under the directory 'Applications/Utilities', this is where all your passwords
+and sensitive information is saved.
+
+You need to open this application and add your password to it so that is safe
+and can be used by this script to retrieve your password. It's a simple process.
+
+a) Open our KeyChain Access application
+b) Click on the '+' sign at the lower left
+c) Fill 'Key Chain Item Name' with 'oppw'
+d) Fill 'Account Name' with your 1Password's username
+e) Fill the 'Password' field with your 1Password's password
+
+4) Assistive permissions for your terminal
+
+In order to click in windows and read the results you need to grant assistive
+permissions. Go to your System Preferences -> Security -> Privacy -> Accessibility
+and ensure that your Terminal application (if you use iTerm, then
+you need to add the iTerm app) is added to the list and it is checked.
+If you see an error like when trying to connect:
+
+62:115: execution error: System Events got an error: osascript is not allowed assistive access. (-10006)
+
+It probably means that you didn't add your Terminal to the Accessibility list.
+
+STEP-TESTING
+
+1) Ensure your 1Password command line tool have been installed.
+
+op --version
+
+2) Ensure jq have been installed
+
+jq --version
+
+3) Ensure your password is saved in KeyChain and can be retrieved.
+
+${MAIN_COMMAND} ${SUBCOMMAND} pw
+
+4) Finally, you can try go all the way
+
+${MAIN_COMMAND} ${SUBCOMMAND} list
+
+END_OF_README
+    ;;
+*)
+    [[ -z ${1} ]] && return # early return when no argument is given
+    in_cyan "Fetching password from KeyChain...\n"
+    password=$(get_password_from_keychain)
+    in_cyan "Fetching item ${1} from 1Password...\n\n"
+    cp ${password} ${1}
+    in_cyan "The password for ${1} have been saved in clipboard!\n"
+    ;;
+esac
