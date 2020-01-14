@@ -1,0 +1,25 @@
+# vim: ft=sh
+use 'vpn' # functions to interact of vpn
+use 'op'  # functions to interact of 1Password
+
+SUBCOMMAND_DESC="Command for vpn"
+SUBCOMMAND_HELP=$(
+    cat <<EOH
+
+xo            Connect the vpn to xo
+dc            Disconnect vpn connection.
+EOH
+)
+
+case ${1} in
+xo)
+    in_cyan "Fetching connection info from 1Passcode...\n"
+    local info=$(get_item xo | jq '.details.sections[] | select(.title=="Info")')
+
+    in_cyan "Connecting to xo...\n"
+    connect_xo ${info}
+    ;;
+dc)
+    disconnect
+    ;;
+esac

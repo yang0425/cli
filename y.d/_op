@@ -1,57 +1,17 @@
 # vim: ft=sh
-SUBCOMMAND_DESC="Functions to control and connect to 1Password"
-SUBCOMMAND_HELP=$(
-    cat <<EOH
-Functions to control and connect to 1Password on OSX
-
-$(in_cyan 'vpn_guess_service_name')
-  Returns the first VPN IPSec it can find on network configurations.
-
-$(in_cyan 'vpn_status [VPN_SERVICE_NAME]')
-  Outputs Connected|Connecting|Disconnected for a given VPN_SERVICE_NAME, it
-  will use *vpn_guess_service_name* ouput as default.
-
-$(in_cyan 'vpn_start_connection [VPN_SERVICE_NAME]')
-  Will start VPN_SERVICE_NAME service. It will error if VPN_SERVICE_NAME is
-  not given or warn and stop if VPN_SERVICE_NAME is already Connected or Connecting
-  according to *vpn_status*
-
-$(in_cyan 'vpn_attempt_to_enter_password [PASSWORD]')
-  Will invoke AppleScript to type PASSWORD into VPN connection box, you should
-  call *vpn_start_connection* before calling this function. It will stop
-  if PASSWORD is not given.
-
-$(in_cyan 'get_password_from_keychain')
-  Will get password from keychian use key 'oppw'
-EOH
-)
-
-function connect() {
-    /opt/cisco/anyconnect/bin/vpn -s connect Xian <<EOF
-  yyang22
-  123
-EOF
-}
 
 function get_password_from_keychain() {
-    # retrieves keys from keychains on OSX
-    key=$(security -q find-generic-password -gl oppw 2>&1 | egrep '^password' | awk -F\" '{print $2}')
-    echo -n ${key%\\n}
+    local key='oppw'
+    password=$(security -q find-generic-password -gl ${key} 2>&1 | egrep '^password' | awk -F\" '{print $2}')
+    echo -n ${password%\\n}
 }
 
-function list() {
-    local password="${*}"
+function list_all_items() {
+    local password=$(get_password_from_keychain)
     op signin my --output=raw <<<${password} | op list items | jq -r '.[] | .overview.title'
 }
 
-function get() {
-    local password="${1}"
-    local item="${2}"
-    op signin my --output=raw <<<${password} | op get item ${item} | jq '.'
-}
-
-function cp(){
-    local password="${1}"
-    local item="${2}"
-    op signin my --output=raw <<<${password} | op get item ${item} | jq -r '.details.password' | pbcopy
+function get_item() {
+    local password=$(get_password_from_keychain)
+    op signin my --output=raw <<<${password} | op get item ${1} | jq '.'
 }

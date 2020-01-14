@@ -1,0 +1,46 @@
+# vim: ft=sh
+
+function _get_token_from_passcode() {
+  local pin=${1}
+  local DELAY_WAIT_FOR_START="3"
+
+  osascript <<EOA
+    set appName to "Passcode"
+    set thePin to "${pin}"
+
+    activate application appName
+
+    tell application appName
+      activate
+      tell application "System Events"
+        delay ${DELAY_WAIT_FOR_START} -- wait for app to start
+        keystroke thePin -- type the pin number
+        key code 36 -- return key
+        click UI element "Copy" of group 1 of UI element 1 of row 1 of table 1 of scroll area 1 of group 1 of window 1 of application process appName
+      end tell
+    end tell
+
+    quit application appName
+EOA
+}
+
+function connect_xo() {
+  local info=${*}
+
+  local server=$(jq -n "${info}" | jq -r '.fields[] | select(.t=="server").v')
+  local username=$(jq -n "${info}" | jq -r '.fields[] | select(.t=="username").v')
+  local pin=$(jq -n "${info}" | jq -r '.fields[] | select(.t=="passcode").v')
+
+  _get_token_from_passcode ${pin}
+  local token=$(pbpaste | tr -d '\n')
+
+  /opt/cisco/anyconnect/bin/vpn -s connect "${server}" <<EOF
+${username}
+${token}
+y
+EOF
+}
+
+function disconnect() {
+  /opt/cisco/anyconnect/bin/vpn disconnect
+}

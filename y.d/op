@@ -8,34 +8,23 @@ SUBCOMMAND_HELP=$(
 readme        Read this first! Setup and notes.
 list          List all items.
 get [Title]   Get information with title.
-cp [Title]    Copy password to clipboard.
-[Title]       Same as "cp [Title]" just a shortcut
+[Title]       Same as "get [Title]" just a shortcut
 pw            Retrive password for 1Password.
 EOH
 )
 
 case ${1} in
 list)
-    in_cyan "Fetching password from KeyChain...\n"
-    password=$(get_password_from_keychain)
-    in_cyan "Fetching items from 1Password...\n\n"
-    list ${password}
+    in_cyan "Fetching all items from 1Password...\n"
+    list_all_items
     ;;
 get)
-    in_cyan "Fetching password from KeyChain...\n"
-    password=$(get_password_from_keychain)
-    in_cyan "Fetching item ${2[@]} from 1Password...\n\n"
-    get ${password} ${2[@]}
-    ;;
-cp)
-    in_cyan "Fetching password from KeyChain...\n"
-    password=$(get_password_from_keychain)
-    in_cyan "Fetching item ${2} from 1Password...\n\n"
-    cp ${password} ${2}
-    in_cyan "The password for ${2} have been saved in clipboard!\n"
+    in_cyan "Fetching item ${2} from 1Password...\n"
+    get_item ${2}
     ;;
 pw)
-    echo $(in_cyan "Password: $(get_password_from_keychain)\n")
+    in_cyan "Fetching password from KeyChain...\n"
+    in_green "Password: $(get_password_from_keychain)\n"
     ;;
 readme)
     less <<END_OF_README
@@ -108,10 +97,7 @@ END_OF_README
     ;;
 *)
     [[ -z ${1} ]] && return # early return when no argument is given
-    in_cyan "Fetching password from KeyChain...\n"
-    password=$(get_password_from_keychain)
-    in_cyan "Fetching item ${1} from 1Password...\n\n"
-    cp ${password} ${1}
-    in_cyan "The password for ${1} have been saved in clipboard!\n"
+    in_cyan "Fetching item ${1} from 1Password...\n"
+    get_item ${1}
     ;;
 esac
