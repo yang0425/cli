@@ -24,6 +24,27 @@ function _get_token_from_passcode() {
 EOA
 }
 
+function _get_token_from_jauth() {
+  local DELAY_WAIT_FOR_START="3"
+
+  osascript <<EOA
+    set appName to "JAuth"
+
+    activate application appName
+
+    tell application appName
+      activate
+      tell application "System Events"
+        delay ${DELAY_WAIT_FOR_START} -- wait for app to start
+        set token to value of static text 1 of window 1 of application process appName
+      end tell
+    end tell
+
+    quit application appName
+    return token
+EOA
+}
+
 function connect_xo() {
   local info=${*}
 
@@ -41,6 +62,27 @@ y
 EOF
 }
 
+function connect_tw() {
+  local info=${*}
+
+  local server=$(jq -n "${info}" | jq -r '.fields[] | select(.t=="server").v')
+  local username=$(jq -n "${info}" | jq -r '.fields[] | select(.t=="username").v')
+  local password=$(jq -n "${info}" | jq -r '.fields[] | select(.t=="password").v')
+
+  local token=$(_get_token_from_jauth | sed 's/[[:space:]]//g')
+
+  /opt/cisco/anyconnect/bin/vpn -s connect "${server}" <<EOF
+${username}
+${password}
+4
+${token}
+EOF
+}
+
 function disconnect() {
   /opt/cisco/anyconnect/bin/vpn disconnect
+}
+
+function show_status() {
+  /opt/cisco/anyconnect/bin/vpn stats | head -10
 }

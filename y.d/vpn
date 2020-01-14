@@ -6,8 +6,10 @@ SUBCOMMAND_DESC="Command for vpn"
 SUBCOMMAND_HELP=$(
     cat <<EOH
 
-xo            Connect the vpn to xo
+xo            Connect the vpn to xo.
+tw            Connect the vpn to tw.
 dc            Disconnect vpn connection.
+status        Show the vpn status.
 EOH
 )
 
@@ -19,7 +21,17 @@ xo)
     in_cyan "Connecting to xo...\n"
     connect_xo ${info}
     ;;
+tw)
+    in_cyan "Fetching connection info from 1Passcode...\n"
+    local info=$(get_item tw | jq '.details.sections[] | select(.title=="Info")')
+
+    in_cyan "Connecting to tw...\n"
+    connect_tw ${info}
+    ;;
 dc)
     disconnect
+    ;;
+status)
+    show_status
     ;;
 esac
